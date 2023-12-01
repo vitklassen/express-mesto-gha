@@ -20,12 +20,13 @@ module.exports.getUserById = (req, res) => {
     res.send({data: user});
   })
   .catch((err) => {
+    console.log(err.name);
     if(err.name == "ValidationError"){
       res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({message: err.message});
       return
     }
     else {
-      res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({message: 'Пользователь не найден'});
+      res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({message: 'Запрашиваемый пользователь не найден'});
       return
     }
     res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
