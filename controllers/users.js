@@ -6,7 +6,7 @@ module.exports.getAllUsers = (req, res) => {
     res.send({data: users});
   })
   .catch((err) => {
-    if(err.name == "ValidationError") {
+    if(err.name == "CastError") {
       res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({message: err.message});
       return
     }
@@ -17,16 +17,16 @@ module.exports.getAllUsers = (req, res) => {
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
   .then((user) => {
+    if(!user) {
+      res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({message: 'Запрашиваемый пользователь не найден'});
+      return
+    }
     res.send({data: user});
   })
   .catch((err) => {
     console.log(err.name);
-    if(err.name == "ValidationError"){
+    if(err.name == "CastError"){
       res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({message: err.message});
-      return
-    }
-    else {
-      res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({message: 'Запрашиваемый пользователь не найден'});
       return
     }
     res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
@@ -40,9 +40,13 @@ module.exports.createUser = (req, res) => {
   .then((user) => {
     res.send({data: user});
   })
-  .catch(() => {
-    res.status(500).send({ message: 'Произошла ошибка' });
-  })
+  .catch((err) => {
+    if(err.name == "ValidationError"){
+      res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({message: err.message});
+      return
+    }
+    res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
+  }) 
 }
 
 module.exports.updateProfile = (req, res) => {
@@ -51,8 +55,12 @@ module.exports.updateProfile = (req, res) => {
   .then((user) => {
     res.send({data: user})
   })
-  .catch(() => {
-    res.status(500).send({ message: 'Произошла ошибка' });
+  .catch((err) => {
+    if(err.name == "ValidationError"){
+      res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({message: err.message});
+      return
+    }
+    res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
   })
 }
 
