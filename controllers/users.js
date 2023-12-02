@@ -13,15 +13,14 @@ module.exports.getAllUsers = (req, res) => {
 
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
-    .orFail(new Error('notFoundUser'))
     .then((user) => {
-      res.send({ data: user });
-    })
-    .catch((err) => {
-      if (err.name === 'notFoundUser') {
+      if (!user) {
         res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
         return;
       }
+      res.send({ data: user });
+    })
+    .catch((err) => {
       if (err.name === 'CastError') {
         res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
         return;
