@@ -70,7 +70,11 @@ module.exports.updateAvatar = (req, res) => {
   .then((avatar) => {
     res.send({data: avatar})
   })
-  .catch(() => {
-    res.status(500).send({ message: 'Произошла ошибка' });
+  .catch((err) => {
+    if(err.name == "ValidationError"){
+      res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({message: err.message});
+      return
+    }
+    res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
   })
 }
