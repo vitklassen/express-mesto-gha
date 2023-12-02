@@ -6,13 +6,7 @@ module.exports.getAllCards = (req, res) => {
     .then((cards) => {
       res.send({ data: cards });
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res
-          .status(http2.constants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: err.message });
-        return;
-      }
+    .catch(() => {
       res
         .status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
         .send({ message: 'Ошибка на сервере' });
@@ -24,7 +18,7 @@ module.exports.createCard = (req, res) => {
   const owner = req.user._id;
   Card.create({ name, link, owner })
     .then((card) => {
-      res.send({ data: card });
+      res.status(http2.constants.HTTP_STATUS_CREATED).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {

@@ -6,25 +6,22 @@ module.exports.getAllUsers = (req, res) => {
     .then((users) => {
       res.send({ data: users });
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
-        return;
-      }
+    .catch(() => {
       res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
     });
 };
 
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
+    .orFail(new Error('notFoundUser'))
     .then((user) => {
-      if (!user) {
-        res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
-        return;
-      }
       res.send({ data: user });
     })
     .catch((err) => {
+      if (err.name === 'notFoundUser') {
+        res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
+        return;
+      }
       if (err.name === 'CastError') {
         res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
         return;
@@ -38,7 +35,7 @@ module.exports.createUser = (req, res) => {
 
   User.create({ name, about, avatar })
     .then((user) => {
-      res.send({ data: user });
+      res.status(http2.constants.HTTP_STATUS_CREATED).send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
