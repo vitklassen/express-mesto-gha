@@ -1,7 +1,8 @@
 const router = require('express').Router();
-const http2 = require("http2");
+const http2 = require('http2');
+
 function setBadPathError(req, res) {
-    res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({ message: "Неверный путь" });
+  res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({ message: 'Неверный путь' });
 }
 
 router.get('/', setBadPathError);
