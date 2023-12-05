@@ -1,4 +1,6 @@
 const http2 = require('http2');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 module.exports.getAllUsers = (req, res) => {
@@ -30,19 +32,23 @@ module.exports.getUserById = (req, res) => {
 };
 
 module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-
-  User.create({ name, about, avatar })
-    .then((user) => {
-      res.status(http2.constants.HTTP_STATUS_CREATED).send({ data: user });
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  bcrypt.hash({ password }, 5)
+    .then((hash) => User.create({
+      name, about, avatar, email, hash,
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
-        return;
-      }
-      res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
-    });
+      .then((user) => {
+        res.status(http2.constants.HTTP_STATUS_CREATED).send({ data: user });
+      })
+      .catch((err) => {
+        if (err.name === 'ValidationError') {
+          res.status(http2.constants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
+          return;
+        }
+        res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
+      }));
 };
 
 module.exports.updateProfile = (req, res) => {
@@ -72,5 +78,17 @@ module.exports.updateAvatar = (req, res) => {
         return;
       }
       res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
+    });
+};
+
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials({ email, password })
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res.send({ token });
+    })
+    .catch((err) => {
+      res.status(http2.constants.HTTP_STATUS_UNAUTHORIZED).send({ message: err.message });
     });
 };
