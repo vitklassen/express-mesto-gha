@@ -30,14 +30,4 @@ const cardSchema = new mongoose.Schema({
   },
 }, { versionKey: false });
 
-cardSchema.statics.checkCardOwner = function(cardId) {
-  return this.findByIdAndDelete(cardId)
-  .then((card) => {
-    if(!card) {
-      return Promise.reject(new Error('Неправильные почта или пароль'));
-    }
-
-  })
-}
-
 module.exports = mongoose.model('card', cardSchema);
