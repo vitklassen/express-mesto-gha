@@ -42,6 +42,12 @@ module.exports.deleteCard = (req, res) => {
           .send({ message: 'Запрашиваемая карточка не найдена' });
         return;
       }
+      if (card.owner !== req.user._id) {
+        res
+          .status(http2.constants.HTTP_STATUS_UNAUTHORIZED)
+          .send({ message: 'Вы не можете удалить чужую карточку' });
+        return;
+      }
       res.send({ data: card });
     })
     .catch((err) => {

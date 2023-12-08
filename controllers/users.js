@@ -2,23 +2,25 @@ const http2 = require('http2');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const ServerError = require('../errors/ServerError');
+const NotFoundError = require('../errors/NotFoundError');
 
 module.exports.getAllUsers = (req, res) => {
   User.find({})
     .then((users) => {
+      if (!users) {
+        throw new ServerError('Ошибка на сервере');
+      }
       res.send({ data: users });
     })
-    .catch(() => {
-      res.status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Ошибка на сервере' });
-    });
+    .catch(err => next(err));
 };
 
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        res.status(http2.constants.HTTP_STATUS_NOT_FOUND).send({ message: 'Запрашиваемый пользователь не найден' });
-        return;
+        throw new NotFoundError('Запрашиваемый пользователь не найден');
       }
       res.send({ data: user });
     })
@@ -35,9 +37,9 @@ module.exports.createUser = (req, res) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-  bcrypt.hash({ password }, 5)
+  bcrypt.hash(password, 5)
     .then((hash) => User.create({
-      name, about, avatar, email, hash,
+      name, about, avatar, email, password: hash,
     })
       .then((user) => {
         res.status(http2.constants.HTTP_STATUS_CREATED).send({ data: user });
@@ -83,12 +85,12 @@ module.exports.updateAvatar = (req, res) => {
 
 module.exports.login = (req, res) => {
   const { email, password } = req.body;
-  return User.findUserByCredentials({ email, password })
+  return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
       res.send({ token });
     })
     .catch((err) => {
-      res.status(http2.constants.HTTP_STATUS_UNAUTHORIZED).send({ message: err.message });
+      next(err);
     });
 };
