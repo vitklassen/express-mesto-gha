@@ -6,18 +6,18 @@ const {
 
 router.get('/', getAllUsers);
 router.get('/:userId', celebrate({
-  params: Joi.object.keys({
+  params: Joi.object().keys({
     cardId: Joi.string().alphanum(),
   }).unknown(true),
 }), getUserById);
 router.patch('/me', celebrate({
-  body: Joi.object.keys({
+  body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
   }),
 }), updateProfile);
 router.patch('/me/avatar', celebrate({
-  body: Joi.object.keys({
+  body: Joi.object().keys({
     avatar: Joi.string(),
   }),
 }), updateAvatar);
