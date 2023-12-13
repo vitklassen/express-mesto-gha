@@ -1,69 +1,41 @@
 const http2 = require('http2');
 const Card = require('../models/card');
+const NotFoundError = require('../errors/NotFoundError');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
-module.exports.getAllCards = (req, res) => {
+module.exports.getAllCards = (req, res, next) => {
   Card.find({})
     .then((cards) => {
       res.send({ data: cards });
     })
-    .catch(() => {
-      res
-        .status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Ошибка на сервере' });
-    });
+    .catch((err) => next(err));
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   Card.create({ name, link, owner })
     .then((card) => {
       res.status(http2.constants.HTTP_STATUS_CREATED).send({ data: card });
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res
-          .status(http2.constants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: err.message });
-        return;
-      }
-      res
-        .status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Ошибка на сервере' });
-    });
+    .catch((err) => next(err));
 };
 
-module.exports.deleteCard = (req, res) => {
+module.exports.deleteCard = (req, res, next) => {
   Card.findByIdAndDelete(req.params.cardId)
     .then((card) => {
       if (!card) {
-        res
-          .status(http2.constants.HTTP_STATUS_NOT_FOUND)
-          .send({ message: 'Запрашиваемая карточка не найдена' });
-        return;
+        throw new NotFoundError('Запрашиваемая карточка не найдена');
       }
       if (card.owner !== req.user._id) {
-        res
-          .status(http2.constants.HTTP_STATUS_UNAUTHORIZED)
-          .send({ message: 'Вы не можете удалить чужую карточку' });
-        return;
+        throw new UnauthorizedError('Вы не можете удалить чужую карточку');
       }
       res.send({ data: card });
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res
-          .status(http2.constants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: err.message });
-        return;
-      }
-      res
-        .status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Ошибка на сервере' });
-    });
+    .catch((err) => next(err));
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -71,27 +43,14 @@ module.exports.likeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res
-          .status(http2.constants.HTTP_STATUS_NOT_FOUND)
-          .send({ message: 'Запрашиваемая карточка не найдена' });
-        return;
+        throw new NotFoundError('Запрашиваемая карточка не найдена');
       }
       res.send({ data: card });
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res
-          .status(http2.constants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: err.message });
-        return;
-      }
-      res
-        .status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Ошибка на сервере' });
-    });
+    .catch((err) => next(err));
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -99,22 +58,9 @@ module.exports.dislikeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res
-          .status(http2.constants.HTTP_STATUS_NOT_FOUND)
-          .send({ message: 'Запрашиваемая карточка не найдена' });
-        return;
+        throw new NotFoundError('Запрашиваемая карточка не найдена');
       }
       res.send({ data: card });
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        res
-          .status(http2.constants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: err.message });
-        return;
-      }
-      res
-        .status(http2.constants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-        .send({ message: 'Ошибка на сервере' });
-    });
+    .catch((err) => next(err));
 };
