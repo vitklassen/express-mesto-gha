@@ -1,6 +1,6 @@
 const http2 = require('http2');
 
-module.exports = (err, req, res) => {
+module.exports = (err, req, res, next) => {
   if (err.statusCode) {
     return res.status(err.statusCode).send({ message: err.message });
   }
