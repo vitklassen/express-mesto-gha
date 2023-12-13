@@ -1,7 +1,7 @@
 const http2 = require('http2');
 const Card = require('../models/card');
 const NotFoundError = require('../errors/NotFoundError');
-const UnauthorizedError = require('../errors/UnauthorizedError');
+const ForbiddenError = require('../errors/ForbiddenError');
 
 module.exports.getAllCards = (req, res, next) => {
   Card.find({})
@@ -27,8 +27,8 @@ module.exports.deleteCard = (req, res, next) => {
       if (!card) {
         throw new NotFoundError('Запрашиваемая карточка не найдена');
       }
-      if (card.owner !== req.user._id) {
-        throw new UnauthorizedError('Вы не можете удалить чужую карточку');
+      if (`${card.owner}` !== req.user._id) {
+        throw new ForbiddenError('Вы не можете удалить чужую карточку');
       }
       res.send({ data: card });
     })

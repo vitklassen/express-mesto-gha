@@ -5,7 +5,6 @@ const helmet = require('helmet');
 const { celebrate, Joi, errors } = require('celebrate');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-const errorHandler = require('./middlewares/error-handlers');
 
 const { PORT = 3000, DB_URL = 'mongodb://127.0.0.1:27017/mestodb' } = process.env;
 const app = express();
@@ -35,7 +34,7 @@ app.use('/cards', auth, require('./routes/cards'));
 app.use('*', require('./routes/badPath'));
 
 app.use(errors());
-app.use(errorHandler);
+app.use(require('./middlewares/error-handlers'));
 
 app.listen(PORT, () => {
   console.log('Server is connected');
