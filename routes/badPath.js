@@ -1,8 +1,8 @@
 const router = require('express').Router();
-const ServerError = require('../errors/ServerError');
+const NotFoundError = require('../errors/NotFoundError');
 
 function setBadPathError(req, res, next) {
-  return next(new ServerError('Ошибка сервера'));
+  return next(new NotFoundError('Некорректный путь'));
 }
 
 router.all('/', setBadPathError);
