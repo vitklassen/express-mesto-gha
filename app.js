@@ -2,36 +2,29 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
-const { celebrate, Joi, errors } = require('celebrate');
-const { login, createUser } = require('./controllers/users');
+const rateLimiter = require('express-rate-limit');
+const { errors } = require('celebrate');
 const auth = require('./middlewares/auth');
-const { checkUrl } = require('./utils/checkUrl');
 
+const limit = rateLimiter({
+  windowMs: 50000,
+  limit: 10000,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+});
 const { PORT = 3000, DB_URL = 'mongodb://127.0.0.1:27017/mestodb' } = process.env;
 const app = express();
 
 mongoose.connect(DB_URL).then(() => { console.log('MongoDB is connected'); });
 app.use(bodyParser.json());
-
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-  }),
-}), login);
-app.post('/signup', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30),
-    avatar: Joi.string().pattern(checkUrl),
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(8),
-  }),
-}), createUser);
 app.use(helmet());
+app.use(limit);
+app.use('/signin', require('./routes/signin'));
+app.use('/signup', require('./routes/signup'));
 
-app.use('/users', auth, require('./routes/users'));
-app.use('/cards', auth, require('./routes/cards'));
+app.use(auth);
+app.use('/users', require('./routes/users'));
+app.use('/cards', require('./routes/cards'));
 app.use('*', require('./routes/badPath'));
 
 app.use(errors());

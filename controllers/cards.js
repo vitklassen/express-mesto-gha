@@ -22,15 +22,19 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findByIdAndDelete(req.params.cardId)
+  Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
         throw new NotFoundError('Запрашиваемая карточка не найдена');
       }
-      if (`${card.owner}` !== req.user._id) {
+      if ((`${card.owner}` !== req.user._id)) {
         throw new ForbiddenError('Вы не можете удалить чужую карточку');
       }
-      res.send({ data: card });
+      Card.findByIdAndDelete(req.params.cardId)
+        .then(() => {
+          res.send({ message: 'Карточка удалена' });
+        })
+        .catch((err) => next(err));
     })
     .catch((err) => next(err));
 };

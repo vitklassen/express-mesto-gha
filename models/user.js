@@ -37,7 +37,6 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Введите пароль'],
-    minlength: 8,
     select: false,
   },
 }, { versionKey: false });
