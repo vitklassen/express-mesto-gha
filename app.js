@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const rateLimiter = require('express-rate-limit');
 const { errors } = require('celebrate');
 const auth = require('./middlewares/auth');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 const limit = rateLimiter({
   windowMs: 50000,
@@ -19,6 +20,7 @@ mongoose.connect(DB_URL).then(() => { console.log('MongoDB is connected'); });
 app.use(bodyParser.json());
 app.use(helmet());
 app.use(limit);
+app.use(requestLogger);
 app.use('/signin', require('./routes/signin'));
 app.use('/signup', require('./routes/signup'));
 
@@ -27,6 +29,7 @@ app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 app.use('*', require('./routes/badPath'));
 
+app.use(errorLogger);
 app.use(errors());
 app.use(require('./middlewares/error-handlers'));
 
